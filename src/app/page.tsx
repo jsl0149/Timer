@@ -1,65 +1,211 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import type { SessionCategory, SessionRow } from '@/network/supabase/types';
+import { useSessions } from '@/hooks/useSessions';
+
+const CATEGORIES: { id: SessionCategory; label: string }[] = [
+  { id: 'cs', label: 'CS 공부' },
+  { id: 'cote', label: '알고리즘' },
+  { id: 'silmu', label: '실무 공부' },
+];
+
+const TARGET_HOURS = 1000;
+
+function formatAccumulated(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}시간 ${m}분`;
+  return `${m}분`;
+}
+
+function formatElapsed(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
+  return `${pad(m)}:${pad(s)}`;
+}
 
 export default function Home() {
+  const {
+    sessions,
+    totals,
+    isLoading: loading,
+    saveSession,
+    isSaving: saving,
+    deviceId,
+  } = useSessions();
+
+  const [selectedCategory, setSelectedCategory] =
+    useState<SessionCategory | null>(null);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [sessionDescription, setSessionDescription] = useState('');
+
+  useEffect(() => {
+    if (!startedAt) return;
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [startedAt]);
+
+  const isRunning = selectedCategory !== null && startedAt !== null;
+
+  const handleStart = (category: SessionCategory) => {
+    setSelectedCategory(category);
+    setStartedAt(Date.now());
+    setElapsedSeconds(0);
+    setSessionDescription('');
+  };
+
+  const handleStop = async () => {
+    if (!selectedCategory || startedAt === null || !deviceId) return;
+    const durationSeconds = Math.floor((Date.now() - startedAt) / 1000);
+    saveSession({
+      device_id: deviceId,
+      category: selectedCategory,
+      started_at: new Date(startedAt).toISOString(),
+      duration_seconds: durationSeconds,
+      description: sessionDescription.trim() || null,
+    });
+    setSelectedCategory(null);
+    setStartedAt(null);
+    setElapsedSeconds(0);
+    setSessionDescription('');
+  };
+
+  const totalSeconds = totals.cs + totals.cote + totals.silmu;
+  const totalHours = totalSeconds / 3600;
+  const progressPercent = Math.min(100, (totalHours / TARGET_HOURS) * 100);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400">
+        로딩 중…
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 p-6 font-sans">
+      <div className="mx-auto max-w-2xl space-y-8">
+        <header className="text-center">
+          <h1 className="text-2xl font-bold tracking-tight">1000시간 달성</h1>
+          <p className="mt-1 text-zinc-600 dark:text-zinc-400 text-sm">
+            화이팅
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+        </header>
+
+        <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm">
+          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+            전체 누적
+          </p>
+          <p className="mt-1 text-3xl font-semibold tabular-nums">
+            {formatAccumulated(totalSeconds)}
+          </p>
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+            <div
+              className="h-full rounded-full bg-zinc-800 dark:bg-zinc-200 transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+          </div>
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            목표 1000시간 중 {totalHours.toFixed(1)}시간 (
+            {progressPercent.toFixed(1)}%)
+          </p>
+        </section>
+
+        <section className="grid gap-4 sm:grid-cols-3">
+          {CATEGORIES.map(({ id, label }) => {
+            const isActive = selectedCategory === id;
+            const canStart = !isRunning;
+            const canStop = isRunning && isActive;
+            return (
+              <div
+                key={id}
+                className={`rounded-2xl border p-5 transition-colors ${
+                  isActive
+                    ? 'border-zinc-400 dark:border-zinc-500 bg-zinc-100 dark:bg-zinc-800'
+                    : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'
+                }`}
+              >
+                <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                  {label}
+                </p>
+                <p className="mt-2 text-xl font-semibold tabular-nums">
+                  {isActive && startedAt !== null
+                    ? formatElapsed(elapsedSeconds)
+                    : formatAccumulated(totals[id])}
+                </p>
+                {isActive && (
+                  <div className="mt-3">
+                    <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">
+                      이번에 한 일 (선택)
+                    </label>
+                    <input
+                      type="text"
+                      value={sessionDescription}
+                      onChange={(e) => setSessionDescription(e.target.value)}
+                      placeholder="예: OS 스케줄링, DFS, React 쿼리"
+                      className="w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm placeholder:text-zinc-400"
+                    />
+                  </div>
+                )}
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleStart(id)}
+                    disabled={!canStart || saving}
+                    className="rounded-lg bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 px-3 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    시작
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleStop}
+                    disabled={!canStop || saving}
+                    className="rounded-lg border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? '저장 중…' : '정지'}
+                  </button>
+                </div>
+                <div className="mt-4 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+                  <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                    최근 한 일
+                  </p>
+                  <ul className="space-y-1.5 max-h-32 overflow-y-auto">
+                    {sessions
+                      .filter((s: SessionRow) => s.category === id)
+                      .slice(0, 8)
+                      .map((s: SessionRow) => (
+                        <li
+                          key={s.id}
+                          className="text-xs text-zinc-600 dark:text-zinc-300 flex justify-between gap-2"
+                        >
+                          <span className="truncate">
+                            {s.description || '—'}
+                          </span>
+                          <span className="tabular-nums shrink-0">
+                            {formatAccumulated(s.duration_seconds)}
+                          </span>
+                        </li>
+                      ))}
+                    {sessions.filter((s: SessionRow) => s.category === id)
+                      .length === 0 && (
+                      <li className="text-xs text-zinc-400 dark:text-zinc-500">
+                        기록 없음
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      </div>
     </div>
   );
 }
