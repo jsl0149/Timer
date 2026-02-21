@@ -6,7 +6,7 @@ import { useSessions } from '@/hooks/useSessions';
 
 const CATEGORIES: { id: SessionCategory; label: string }[] = [
   { id: 'cs', label: 'CS 공부' },
-  { id: 'cote', label: '알고리즘' },
+  { id: 'algorithm', label: '알고리즘' },
   { id: 'silmu', label: '실무 공부' },
 ];
 
@@ -77,7 +77,7 @@ export default function Home() {
     setSessionDescription('');
   };
 
-  const totalSeconds = totals.cs + totals.cote + totals.silmu;
+  const totalSeconds = totals.cs + totals.algorithm + totals.silmu;
   const totalHours = totalSeconds / 3600;
   const progressPercent = Math.min(100, (totalHours / TARGET_HOURS) * 100);
 

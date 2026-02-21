@@ -1,4 +1,4 @@
-export type SessionCategory = "cs" | "cote" | "silmu";
+export type SessionCategory = 'cs' | 'algorithm' | 'silmu';
 
 export interface SessionRow {
   id: string;
@@ -15,8 +15,12 @@ export interface Database {
     Tables: {
       sessions: {
         Row: SessionRow;
-        Insert: Omit<SessionRow, "id" | "created_at"> & { id?: string; created_at?: string; description?: string | null };
-        Update: Partial<Omit<SessionRow, "id">>;
+        Insert: Omit<SessionRow, 'id' | 'created_at'> & {
+          id?: string;
+          created_at?: string;
+          description?: string | null;
+        };
+        Update: Partial<Omit<SessionRow, 'id'>>;
       };
     };
   };

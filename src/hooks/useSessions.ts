@@ -7,7 +7,11 @@ import { useSessionQuery } from '@/network/hooks/useSessionQuery';
 import { useSessionMutation } from '@/network/hooks/useSessionMutation';
 
 function deriveTotals(sessions: SessionRow[]): Record<SessionCategory, number> {
-  const next: Record<SessionCategory, number> = { cs: 0, cote: 0, silmu: 0 };
+  const next: Record<SessionCategory, number> = {
+    cs: 0,
+    algorithm: 0,
+    silmu: 0,
+  };
   sessions.forEach((row) => {
     if (row.category in next)
       next[row.category as SessionCategory] += row.duration_seconds;
