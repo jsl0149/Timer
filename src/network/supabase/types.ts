@@ -10,6 +10,18 @@ export interface SessionRow {
   created_at?: string;
 }
 
+export interface AlgorithmProblemRow {
+  id: string;
+  device_id: string;
+  problem_name: string;
+  category: string;
+  link: string | null;
+  solved_at: string;
+  review_by: string;
+  reviewed: boolean;
+  created_at?: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -21,6 +33,14 @@ export interface Database {
           description?: string | null;
         };
         Update: Partial<Omit<SessionRow, 'id'>>;
+      };
+      algorithm_problems: {
+        Row: AlgorithmProblemRow;
+        Insert: Omit<AlgorithmProblemRow, 'id' | 'created_at'> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<AlgorithmProblemRow, 'id'>>;
       };
     };
   };
