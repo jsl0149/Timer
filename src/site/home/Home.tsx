@@ -97,6 +97,18 @@ export default function Home() {
   const totalHours = totalSeconds / 3600;
   const progressPercent = Math.min(100, (totalHours / TARGET_HOURS) * 100);
 
+  const todayKST = new Date().toLocaleDateString('en-CA', {
+    timeZone: 'Asia/Seoul',
+  });
+  const todayTotalSeconds = sessions
+    .filter(
+      (s) =>
+        new Date(s.started_at).toLocaleDateString('en-CA', {
+          timeZone: 'Asia/Seoul',
+        }) === todayKST,
+    )
+    .reduce((sum, s) => sum + s.duration_seconds, 0);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400">
@@ -115,23 +127,33 @@ export default function Home() {
           </p>
         </header>
 
-        <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm">
-          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            전체 누적
-          </p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">
-            {formatAccumulated(totalSeconds)}
-          </p>
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-            <div
-              className="h-full rounded-full bg-zinc-800 dark:bg-zinc-200 transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
-            />
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto]">
+          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm">
+            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              전체 누적
+            </p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums">
+              {formatAccumulated(totalSeconds)}
+            </p>
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+              <div
+                className="h-full rounded-full bg-zinc-800 dark:bg-zinc-200 transition-all duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+              목표 1000시간 중 {totalHours.toFixed(1)}시간 (
+              {progressPercent.toFixed(1)}%)
+            </p>
           </div>
-          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-            목표 1000시간 중 {totalHours.toFixed(1)}시간 (
-            {progressPercent.toFixed(1)}%)
-          </p>
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm">
+            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              오늘의 누적시간
+            </p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums">
+              {formatAccumulated(todayTotalSeconds)}
+            </p>
+          </div>
         </section>
 
         <section className="grid gap-4 sm:grid-cols-3">
