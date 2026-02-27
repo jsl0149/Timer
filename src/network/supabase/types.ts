@@ -18,6 +18,8 @@ export interface AlgorithmProblemRow {
   link: string | null;
   solved_at: string;
   review_by: string;
+  first_solve_seconds?: number | null;
+  second_solve_seconds?: number | null;
   reviewed: boolean;
   created_at?: string;
 }

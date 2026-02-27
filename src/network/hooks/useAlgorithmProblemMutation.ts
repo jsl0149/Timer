@@ -9,6 +9,9 @@ export type AddAlgorithmProblemPayload = {
   link: string | null;
   solved_at: string;
   review_by: string;
+  first_solve_seconds?: number | null;
+  second_solve_seconds?: number | null;
+  reviewed?: boolean;
 };
 
 export function useAddAlgorithmProblemMutation() {
@@ -18,8 +21,8 @@ export function useAddAlgorithmProblemMutation() {
   return useMutation({
     mutationFn: async (payload: AddAlgorithmProblemPayload) => {
       await client.insert({
-        ...payload,
         reviewed: false,
+        ...payload,
       });
     },
     onSuccess: () => {

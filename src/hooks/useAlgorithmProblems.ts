@@ -21,17 +21,43 @@ export function useAlgorithmProblems() {
     setDeviceId(getOrCreateDeviceId());
   }, []);
 
-  const toReview = problems.filter((p: AlgorithmProblemRow) => !p.reviewed);
+  const sortedProblems = [...problems].sort(
+    (a: AlgorithmProblemRow, b: AlgorithmProblemRow) =>
+      new Date(b.solved_at).getTime() - new Date(a.solved_at).getTime(),
+  );
+
+  const toReview = sortedProblems.filter((p: AlgorithmProblemRow) => !p.reviewed);
+
+  const oneShot = sortedProblems
+    .filter(
+      (p: AlgorithmProblemRow) =>
+        p.reviewed &&
+        (p.second_solve_seconds == null || p.second_solve_seconds === 0),
+    )
+    .slice(0, 5);
+
+  const reSolved = sortedProblems
+    .filter(
+      (p: AlgorithmProblemRow) =>
+        p.reviewed &&
+        p.second_solve_seconds != null &&
+        p.second_solve_seconds > 0,
+    )
+    .slice(0, 5);
 
   const addProblem = addMutation.mutate;
+  const updateProblem = updateMutation.mutate;
   const toggleReviewed = (id: string) => {
     updateMutation.mutate({ id, payload: { reviewed: true } });
   };
 
   return {
-    problems,
+    problems: sortedProblems,
     toReview,
+    oneShot,
+    reSolved,
     addProblem,
+    updateProblem,
     toggleReviewed,
     isLoading,
     isAdding: addMutation.isPending,
