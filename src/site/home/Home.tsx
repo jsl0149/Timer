@@ -263,14 +263,20 @@ export default function Home() {
     setSessionDescription('');
   };
 
-  const totalSeconds = totals.cs + totals.algorithm + totals.silmu;
+  const algorithmSecondsFromProblems = algorithmProblems.reduce(
+    (sum, p) =>
+      sum + (p.first_solve_seconds ?? 0) + (p.second_solve_seconds ?? 0),
+    0,
+  );
+  const totalSeconds =
+    totals.cs + totals.silmu + algorithmSecondsFromProblems;
   const totalHours = totalSeconds / 3600;
   const progressPercent = Math.min(100, (totalHours / TARGET_HOURS) * 100);
 
   const todayKST = new Date().toLocaleDateString('en-CA', {
     timeZone: 'Asia/Seoul',
   });
-  const todayTotalSeconds = sessions
+  const todaySessionsSeconds = sessions
     .filter(
       (s) =>
         new Date(s.started_at).toLocaleDateString('en-CA', {
@@ -278,6 +284,14 @@ export default function Home() {
         }) === todayKST,
     )
     .reduce((sum, s) => sum + s.duration_seconds, 0);
+  const todayAlgorithmSeconds = algorithmProblems
+    .filter((p) => (p.solved_at ?? '').startsWith(todayKST))
+    .reduce(
+      (sum, p) =>
+        sum + (p.first_solve_seconds ?? 0) + (p.second_solve_seconds ?? 0),
+      0,
+    );
+  const todayTotalSeconds = todaySessionsSeconds + todayAlgorithmSeconds;
 
   if (loading) {
     return (
