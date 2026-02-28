@@ -150,7 +150,7 @@ export default function Home() {
     }
 
     const now = new Date();
-    const solvedDate = now.toISOString().slice(0, 10);
+    const solvedDate = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
 
     if (!algoProblemName.trim() || !algoProblemCategory.trim()) return;
 
@@ -176,9 +176,9 @@ export default function Home() {
       );
     } else {
       // 40분 안에 해결 못함 → 3일 뒤 다시 풀 문제
-      const reviewDate = new Date(now);
-      reviewDate.setDate(reviewDate.getDate() + 3);
-      const reviewBy = reviewDate.toISOString().slice(0, 10);
+      const reviewDateObj = new Date(solvedDate);
+      reviewDateObj.setUTCDate(reviewDateObj.getUTCDate() + 3);
+      const reviewBy = reviewDateObj.toISOString().slice(0, 10);
 
       addProblem(
         {
@@ -188,7 +188,7 @@ export default function Home() {
           link: algoProblemLink.trim() || null,
           solved_at: solvedDate,
           review_by: reviewBy,
-          first_solve_seconds: null,
+          first_solve_seconds: elapsed,
           second_solve_seconds: null,
           reviewed: false,
         },
